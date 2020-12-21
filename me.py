@@ -16,3 +16,8 @@ for i in range(n_clusters):
     groups.append(np.take(X, groups_idx, axis=0))
 
 
+def softmax(Z):
+    exps = np.exp(Z - np.max(Z))
+    return exps / np.sum(exps)
+
+
