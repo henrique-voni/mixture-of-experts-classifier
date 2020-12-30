@@ -2,6 +2,8 @@ import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.cluster import KMeans
 
+GATING_THRESHOLD = .3
+
 X,y = load_iris(return_X_y=True)
 
 n_clusters = 3
@@ -24,10 +26,19 @@ def softmax(Z):
     exps = np.exp(Z - np.max(Z))
     return exps / np.sum(exps)
 
-mean = np.mean(X, axis=0)
-cov = np.cov(X.T)
+def compute_g(P):
+    return softmax(P) 
 
-values = multivariate_normal_pdf(X, mean, cov)
+def distribute_samples(X):
+
+    mean_x = np.mean(X, axis=0)
+    cov_x = np.cov(X.T)
+    p_x = multivariate_normal_pdf(X, mean_x, cov_x)
+
+    g_x = compute_g(p_x)
+
+    ## selecionar amostras baseado no threshold.
+
 
 
 # kmeans = KMeans(n_clusters=n_clusters, random_state=10)
