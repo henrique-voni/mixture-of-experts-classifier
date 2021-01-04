@@ -31,19 +31,26 @@ def compute_g(P):
 
 def distribute_samples(X):
     
-    centers = _generate_prototypes(X, N_EXPERTS)
-    cov_x = np.cov(X.T)
+    params = _generate_parameters(X, N_EXPERTS)
     
-    for prototype in centers:
-        p_x = multivariate_normal_pdf(X, prototype, cov_x)
+    for center, cov_matrix in params:
+        p_x = multivariate_normal_pdf(X, center, cov_matrix)
         g_x = compute_g(p_x)
         ## selecionar amostras baseado no threshold.
 
 
-def _generate_prototypes(X, n_experts):
+
+def _generate_parameters(X, n_experts):
     kmeans = KMeans(n_clusters=n_experts, random_state=10)
     kmeans.fit(X)
-    return kmeans.cluster_centers_
 
-#     group_idx = np.argwhere(kmeans.labels_ == i)
-#     group_samples = np.take(X, group_idx, axis=0)
+    params = []
+
+    for i, center in enumerate(kmeans.cluster_centers_):
+        group_idx = np.argwhere(kmeans.labels_ == i).flatten()
+        group_samples = np.take(X, group_idx, axis=0)
+        group_cov = np.cov(group_samples.T)
+        params.append((center, group_cov))    
+
+    return params
+
