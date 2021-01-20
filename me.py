@@ -54,10 +54,15 @@ class MixtureOfExperts(BaseEstimator, ClassifierMixin):
         self._random_state = random_state
         self._km = KMeans(n_clusters = len(estimators), random_state=random_state)
 
-    def _generate_params(self, X, n_clusters):
-        pass
+    def _generate_params(self, X):
+        self._km.fit(X)
+        for i, center in enumerate(self._km.cluster_centers_):
+            cluster_samples = X[self._km.labels_ == i]
+            cluster_cov = np.cov(cluster_samples.T)
+            self._params.append((center, cluster_cov))
+
     
-    def _distribute_samples(self, X, y, center, cov):
+    def _distribute_samples(self, X, y):
         pass
 
     def _mvpdf_single(self, x, center, cov):
