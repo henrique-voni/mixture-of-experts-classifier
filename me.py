@@ -32,25 +32,15 @@ X,y = load_iris(return_X_y=True)
 #         ## selecionar amostras baseado no threshold.
 
 
-
-# def _generate_parameters(X, n_experts):
-#     kmeans = KMeans(n_clusters=n_experts, random_state=10)
-#     kmeans.fit(X)
-#     params = []
-
-#     for i, center in enumerate(kmeans.cluster_centers_):
-#         group_idx = np.argwhere(kmeans.labels_ == i).flatten()
-#         group_samples = np.take(X, group_idx, axis=0)
-#         group_cov = np.cov(group_samples.T)
-#         params.append((center, group_cov))    
-#     return params
-
 class MixtureOfExperts(BaseEstimator, ClassifierMixin):
 
     def __init__(self, estimators, gt, random_state):
         self._estimators = estimators
         self._gaussian_threshold = gt
+
         self._params = []
+        self._pdfs = []
+        self._X_per_cluster_idx = [] # Para armazenar o indice das amostras por cluster
         self._random_state = random_state
         self._km = KMeans(n_clusters = len(estimators), random_state=random_state)
 
@@ -63,7 +53,14 @@ class MixtureOfExperts(BaseEstimator, ClassifierMixin):
 
     
     def _distribute_samples(self, X, y):
-        pass
+
+        for (center, cov) in self._params:
+            pdf = self._mvpdf(X, center, cov)
+            self._pdfs.append(pdf)
+            self._X_per_cluster_idx.append( np.argwhere( pdf >= self._gaussian_threshold ).flatten() )
+
+            ##
+
 
     def _mvpdf_single(self, x, center, cov):
         k = len(x)
@@ -85,9 +82,15 @@ class MixtureOfExperts(BaseEstimator, ClassifierMixin):
         return self._softmax(P) 
 
     def fit(self, X, y):   
-        pass
+        
+        ## Tratar X,y
+        self._generate_params(X)
+
+        for estimator, (X,y) in zip(self._estimators, _):
+            estimator.fit(X,y)
+
 
     def predict(X):
-        pass
+        
 
 
