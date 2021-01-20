@@ -6,19 +6,10 @@ from scipy.spatial.distance import euclidean
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 
-
 GATING_THRESHOLD = .3
 N_EXPERTS = 3
 
 X,y = load_iris(return_X_y=True)
-
-# def _rbf(x, center, cov):
-#     dist = euclidean(x, center) ** 2
-#     t = 2 * np.linalg.det(cov)
-#     return np.exp( - dist / t )
-
-# def rbf(X, center, cov):
-#     return np.apply_along_axis(_rbf, 1, X, center, cov)
 
 # def _mvpdf(x, center, cov):
 #     inv_cov = np.linalg.inv(cov)
@@ -54,69 +45,44 @@ X,y = load_iris(return_X_y=True)
 #         params.append((center, group_cov))    
 #     return params
 
-class MixtureModels(BaseEstimator, ClassifierMixin):
+class MixtureOfExperts(BaseEstimator, ClassifierMixin):
 
-    def __init__(self, estimators, gating_bound, random_state):
-        self.estimators_ = estimators
-        self.gating_bound_ = gating_bound
-        self.params_ = []
-        self.random_state_ = random_state
+    def __init__(self, estimators, gt, random_state):
+        self._estimators = estimators
+        self._gaussian_threshold = gt
+        self._params = []
+        self._random_state = random_state
+        self._km = KMeans(n_clusters = len(estimators), random_state=random_state)
 
-    def generate_params_(self, X, n_clusters):
+    def _generate_params(self, X, n_clusters):
         pass
     
-    def distribute_samples_(self, X, y, center, cov):
+    def _distribute_samples(self, X, y, center, cov):
         pass
 
-    def mvpdf_single_(self, x, center, cov):
-
+    def _mvpdf_single(self, x, center, cov):
         k = len(x)
-        det_cov = np.linalg.det(cov)
+        det_cov = np.linalg.det(2 * cov) # Cov multiplicada por 2 para evitar valores muito baixos nas probabilidades
         inv_cov = np.linalg.inv(cov)
 
         o = 1 / np.sqrt( (2 * np.pi) ** k  * det_cov)
         p = np.exp( -.5 * ( np.dot( (x - center).T, inv_cov ).dot( x-center ) ))
         return o * p
 
-    def mvpdf_(self, X, center, cov):
-        return np.apply_along_axis(self.mvpdf_single_, 1, X, center, cov)
+    def _mvpdf(self, X, center, cov):
+        return np.apply_along_axis(self._mvpdf_single, 1, X, center, cov)
 
-    def softmax_(self, Z):
+    def _softmax(self, Z):
         exps = np.exp(Z - np.max(Z))
         return exps / exps.sum()
 
-    def compute_g_(self, P):
-        return self.softmax_(P) 
+    def _compute_g(self, P):
+        return self._softmax(P) 
 
-    def fit(self, X, y):
-        self.params_ = self.generate_params_(X, len(self.estimators_))
+    def fit(self, X, y):   
+        pass
 
-        #params = (center, cov)
-        for estimator, (center, cov) in zip(self.estimators_, self.params_):
-            X_est, y_est = self.distribute_samples_(X,y, center, cov)
-            estimator.fit(X_est, y_est)
-
-
-
-            
-
-
-
-
-
-
-
-# params = _generate_parameters(X, 3)
-
-# # center1, cov2 = params[0]
-# for center, cov in params:
-#     pdf = rbf(X, center, cov)
-#     # s = compute_g(pdf)
-#     # rbf = rbf(X, center, cov)
-#     # print(f"Max:{max(pdf)}")
-#     # print(f"Min:{min(pdf)}")
-#     print(pdf.shape)
-#     print(max(pdf))
-#     # print(f"Max: {max(rbf)}")
+    def predict(X):
+        pass
 
 
