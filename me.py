@@ -19,7 +19,6 @@ class MixtureOfExperts():
         self._estimators = estimators
         self._gaussian_threshold = gt
         self._params = []
-        self._pdfs = []
         self._random_state = random_state
         self._km = KMeans(n_clusters = len(estimators), random_state=random_state)
 
@@ -36,34 +35,6 @@ class MixtureOfExperts():
             cluster_samples = X[self._km.labels_ == i]
             cluster_cov = np.cov(cluster_samples.T)
             self._params.append((center, cluster_cov))
-
-
-    """
-        Método para distribuição de amostras para cada especialista no treinamento
-        
-        Parâmetros:
-            X - Amostras
-            y - classes de cada amostra
-        
-        Primeiro, o método gera os centros e matrizes de covariância associados a cada especialista/cluster. Em seguida,
-        calcula-se a probabilidade usando a função densidade de probabilidade da distribuição normal multivariada para
-        cada amostra. A amostra é aceita pelo cluster se ela for maior que um limiar pré-definido (_gaussian_threshold).
-    """
-    def _distribute_train(self, X, y):      
-        dist = []
-        self._generate_params(X)
-        for (center, cov) in self._params:
-            
-            pdf = self._mvpdf(X, center, cov)
-            self._pdfs.append(pdf)
-
-            rel_idx = np.argwhere(pdf > self._gaussian_threshold).flatten()
-            X_rel = np.take(X, rel_idx, axis=0)
-            y_rel = np.take(y, rel_idx, axis=0)
-            # No treino os G's não fazem diferença porque não influenciam em qual amostra pegar, então basta retornar as amostras
-            dist.append({"X" : X_rel, "y" : y_rel})
-        return dist
-
 
     """
         Método auxiliar para calcular a probabilidade de uma amostra seguir uma distribuição normal multivariada com parâmetros
@@ -104,17 +75,44 @@ class MixtureOfExperts():
         exps = np.exp(Z - np.max(Z))
         return exps / exps.sum()
 
-
     """
-        Método para computar os valores de G associados a cada amostra, dados seus valores de probabilidade.
-
-        @TODO: Considerar não apenas a softmax, mas também normalização por valor/total de valores
-
+        Método para distribuição de amostras para cada especialista no treinamento
+        
         Parâmetros:
-            P - vetor de probabilidades obtidas pela MVPDF
+            X - Amostras
+            y - classes de cada amostra
+        
+        Primeiro, o método gera os centros e matrizes de covariância associados a cada especialista/cluster. Em seguida,
+        calcula-se a probabilidade usando a função densidade de probabilidade da distribuição normal multivariada para
+        cada amostra. A amostra é aceita pelo cluster se ela for maior que um limiar pré-definido (_gaussian_threshold).
     """
-    def _compute_g(self, P):
-        return self._softmax(P) 
+    def _distribute_train(self, X, y):      
+        dist = []
+        self._generate_params(X)
+        for (center, cov) in self._params:
+            
+            pdf = self._mvpdf(X, center, cov)
+
+            rel_idx = np.argwhere(pdf > self._gaussian_threshold).flatten()
+            X_rel = np.take(X, rel_idx, axis=0)
+            y_rel = np.take(y, rel_idx, axis=0)
+            # No treino os G's não fazem diferença porque não influenciam em qual amostra pegar, então basta retornar as amostras
+            dist.append({"X" : X_rel, "y" : y_rel})
+        return dist
+
+    """
+        Método para calcular a matriz de G's (amostras x especialistas)
+    """
+    def _compute_g(self, X):
+
+        pdfs = [] #matriz de probabilidades P
+        for (center, cov) in self._params:
+            pdfs.append(self._mvpdf(X, center, cov))
+
+        P = np.array(pdfs).T #matriz de probabilidades
+        G = np.apply_along_axis(self._softmax, 0, P)
+        return G
+        
 
 
     def fit(self, X, y):   
