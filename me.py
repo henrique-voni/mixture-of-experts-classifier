@@ -11,25 +11,6 @@ N_EXPERTS = 3
 
 X,y = load_iris(return_X_y=True)
 
-# def _mvpdf(x, center, cov):
-#     inv_cov = np.linalg.inv(cov)
-#     return np.exp( -.5 * ( np.dot( (x - center).T, inv_cov ).dot( x-center ) ))
-
-# def mvpdf(X, center, cov):
-#     return np.apply_along_axis(_mvpdf, 1, X, center, cov)
-
-# def distribute_samples(X):
-    
-#     params = _generate_parameters(X, N_EXPERTS)
-    
-#     for center, cov_matrix in params:
-#         p_x = multivariate_normal_pdf(X, center, cov_matrix)
-#         p_x_rel = np.take(p_x, np.argwhere(p_x > p_x.mean()))
-#         g_x = compute_g(p_x_rel)
-#         print(f"Max: {max(g_x)}")
-#         # print(f"Sum: {sum(g_x)}")
-        
-#         ## selecionar amostras baseado no threshold.
 
 #BaseEstimator, ClassifierMixin
 class MixtureOfExperts():
