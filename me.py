@@ -31,13 +31,12 @@ X,y = load_iris(return_X_y=True)
         
 #         ## selecionar amostras baseado no threshold.
 
-
-class MixtureOfExperts(BaseEstimator, ClassifierMixin):
+#BaseEstimator, ClassifierMixin
+class MixtureOfExperts():
 
     def __init__(self, estimators, gt, random_state):
         self._estimators = estimators
         self._gaussian_threshold = gt
-
         self._params = []
         self._pdfs = []
         self._X_per_cluster_idx = [] # Para armazenar o indice das amostras por cluster
@@ -51,16 +50,21 @@ class MixtureOfExperts(BaseEstimator, ClassifierMixin):
             cluster_cov = np.cov(cluster_samples.T)
             self._params.append((center, cluster_cov))
 
-    
-    def _distribute_samples(self, X, y):
-
+    def _distribute_train(self, X, y):
+        
+        dist = []
+        self._generate_params(X)
         for (center, cov) in self._params:
+            
             pdf = self._mvpdf(X, center, cov)
             self._pdfs.append(pdf)
-            self._X_per_cluster_idx.append( np.argwhere( pdf >= self._gaussian_threshold ).flatten() )
 
-            ##
-
+            rel_idx = np.argwhere(pdf > self._gaussian_threshold).flatten()
+            X_rel = np.take(X, rel_idx, axis=0)
+            y_rel = np.take(y, rel_idx, axis=0)
+            # No treino os G's não fazem diferença porque não influenciam em qual amostra pegar, então basta retornar as amostras
+            dist.append({"X" : X_rel, "y" : y_rel})
+        return dist
 
     def _mvpdf_single(self, x, center, cov):
         k = len(x)
@@ -82,15 +86,13 @@ class MixtureOfExperts(BaseEstimator, ClassifierMixin):
         return self._softmax(P) 
 
     def fit(self, X, y):   
-        
-        ## Tratar X,y
-        self._generate_params(X)
-
-        for estimator, (X,y) in zip(self._estimators, _):
-            estimator.fit(X,y)
+        for estimator, (X_sub,y_sub) in zip(self._estimators, self._distribute_train(X,y)):
+            estimator.fit(X_sub,y_sub)
+        print("Estimators fitted successfully.")
 
 
     def predict(X):
-        
+
+
 
 
