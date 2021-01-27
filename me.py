@@ -75,6 +75,11 @@ class MixtureOfExperts():
         exps = np.exp(Z - np.max(Z))
         return exps / exps.sum()
 
+
+    def _normalize(self, Z):
+        return Z / Z.sum()
+
+
     """
         Método para distribuição de amostras para cada especialista no treinamento
         
@@ -102,16 +107,23 @@ class MixtureOfExperts():
 
     """
         Método para calcular a matriz de G's (amostras x especialistas)
+
+        Parâmetros:
+            - X: amostras
+            - mode ["softmax", "normal"]: modo como os G's serão gerados para gerar valores entre 0 e 1. "softmax" aplica a função
+            softmax sobre a entrada, enquanto "normal" faz uma simples divisão do valor sobre o total dos valores.
     """
-    def _compute_g(self, X):
+    def _compute_g(self, X, mode="softmax"):
 
         pdfs = [] #matriz de probabilidades P
         for (center, cov) in self._params:
             pdfs.append(self._mvpdf(X, center, cov))
 
         P = np.array(pdfs).T #matriz de probabilidades
-        G = np.apply_along_axis(self._softmax, 0, P)
-        return G
+
+        if mode == "softmax":
+            return np.apply_along_axis(self._softmax, 0, P)
+        return np.apply_along_axis(self._normalize, 0, P)
         
 
 
