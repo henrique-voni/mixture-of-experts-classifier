@@ -114,7 +114,8 @@ class MixtureOfExperts():
             softmax sobre a entrada, enquanto "normal" faz uma simples divisão do valor sobre o total dos valores.
     """
     def _compute_g(self, X, mode="softmax"):
-
+        
+        self._generate_params(X)
         pdfs = [] #matriz de probabilidades P
         for (center, cov) in self._params:
             pdfs.append(self._mvpdf(X, center, cov))
@@ -128,13 +129,31 @@ class MixtureOfExperts():
 
 
     def fit(self, X, y):   
+        self._classes = np.unique(y)
         for estimator, (X_sub,y_sub) in zip(self._estimators, self._distribute_train(X,y)):
             estimator.fit(X_sub,y_sub)
         print("Estimators fitted successfully.")
 
 
-    def predict(self, X):
-        pass
+    def predict(self, X, mode="softmax"):        
+        
+        G = self._compute_g(X, mode)
+        pred = np.zeros( (len(self._estimators), X.shape[0]) ) 
+        
+        for i, estimator in enumerate(self._estimators):
+            y_est = estimator.predict(X)        
+            pred[i] = y_est
+
+        pred = pred.T 
+        
+        # M = G
+        # A = pred 
+    
+        ## Voto majoritário pela soma dos pesos (alphas) dos classificadores.
+        predictions = np.argmax(np.array([G.dot(np.where(pred == k, 1, 0).T) for k in self._classes]), 
+                                axis = 0)[0]        
+                                
+        return np.take(self._classes, predictions)
 
 
-
+print(MixtureOfExperts([1,2,3], 0.3, 10).predict(X, mode="softmax"))
