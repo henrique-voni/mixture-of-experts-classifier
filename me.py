@@ -93,16 +93,27 @@ class MixtureOfExperts():
     """
     def _distribute_train(self, X, y):      
         dist = []
-        self._generate_params(X)
-        for (center, cov) in self._params:
+        
+        all_rel_idx = [] # Lista de amostras selecionadas
+        unselected_idx = []
+
+        for (center, cov) in self._params(X):
             
             pdf = self._mvpdf(X, center, cov)
-
             rel_idx = np.argwhere(pdf > self._gaussian_threshold).flatten()
+
+            all_rel_idx.append(rel_idx)
+
             X_rel = np.take(X, rel_idx, axis=0)
             y_rel = np.take(y, rel_idx, axis=0)
-            # No treino os G's não fazem diferença porque não influenciam em qual amostra pegar, então basta retornar as amostras
+
+
             dist.append({"X" : X_rel, "y" : y_rel})
+
+        all_rel_idx = np.unique(np.concatenate([arr for arr in all_rel_idx])) # cria um vetor com as amostras usadas
+        print(all_rel_idx.shape)
+        unselected_idx = np.setdiff1d(np.arange(len(y)), all_rel_idx) # cria um vetor com as amostras não usadas por nenhum cluster
+
         return dist
 
     """
