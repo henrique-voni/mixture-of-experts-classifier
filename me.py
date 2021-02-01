@@ -91,15 +91,16 @@ class MixtureOfExperts():
         calcula-se a probabilidade usando a função densidade de probabilidade da distribuição normal multivariada para
         cada amostra. A amostra é aceita pelo cluster se ela for maior que um limiar pré-definido (_gaussian_threshold).
     """
-    def _distribute_train(self, X, y):      
+    def _distribute_train(self, X, y):
         dist = []
         
         all_rel_idx = [] # Lista de amostras selecionadas
         unselected_idx = []
-
-        for (center, cov) in self._params(X):
+        pdfs = [] # armazena as probabilidades para montar a matriz que selecionará as amostras não usadas
+        for (center, cov) in self._params:
             
             pdf = self._mvpdf(X, center, cov)
+            pdfs.append(pdf)
             rel_idx = np.argwhere(pdf > self._gaussian_threshold).flatten()
 
             all_rel_idx.append(rel_idx)
@@ -107,14 +108,25 @@ class MixtureOfExperts():
             X_rel = np.take(X, rel_idx, axis=0)
             y_rel = np.take(y, rel_idx, axis=0)
 
-
             dist.append({"X" : X_rel, "y" : y_rel})
 
+        P = np.vstack(pdfs).T
+
         all_rel_idx = np.unique(np.concatenate([arr for arr in all_rel_idx])) # cria um vetor com as amostras usadas
-        print(all_rel_idx.shape)
         unselected_idx = np.setdiff1d(np.arange(len(y)), all_rel_idx) # cria um vetor com as amostras não usadas por nenhum cluster
 
+        unselected_P = np.take(P, unselected_idx, axis=0) #valores das PDF apenas para as amostras não selecionadas
+        unselected_dist_idx = np.argmax(unselected_P, axis=1) #verifica qual PDF tem maior valor pelo indice
+        
+        for i, _ in enumerate(dist):
+
+            uns_X = X[np.argwhere(unselected_dist_idx == i).flatten()]
+            uns_y = y[np.argwhere(unselected_dist_idx == i).flatten()]
+            dist[i]["X"] = np.concatenate((dist[i]["X"], uns_X))
+            dist[i]["y"] = np.concatenate((dist[i]["y"], uns_y))
+
         return dist
+
 
     """
         Método para calcular a matriz de G's (amostras x especialistas)
