@@ -110,7 +110,7 @@ class MixtureOfExperts():
 
             dist.append({"X" : X_rel, "y" : y_rel})
 
-        P = np.vstack(pdfs).T
+        P = np.vstack(pdfs).T #concatena todas as PDFS em uma única matriz
 
         all_rel_idx = np.unique(np.concatenate([arr for arr in all_rel_idx])) # cria um vetor com as amostras usadas
         unselected_idx = np.setdiff1d(np.arange(len(y)), all_rel_idx) # cria um vetor com as amostras não usadas por nenhum cluster
@@ -167,16 +167,14 @@ class MixtureOfExperts():
             y_est = estimator.predict(X)        
             pred[i] = y_est
 
-        pred = pred.T 
-        
-        # M = G
-        # A = pred 
-    
-        ## Voto majoritário pela soma dos pesos (alphas) dos classificadores.
-        predictions = np.argmax(np.array([G.dot(np.where(pred == k, 1, 0).T) for k in self._classes]), 
-                                axis = 0)[0]        
-                                
-        return np.take(self._classes, predictions)
+        pred = pred.T # Matriz de predições (amostras x especialistas)
+        C = len(self._classes) # Quantidade de classes
+        M, N = pred.shape
 
+        row, col = np.indices((M,N))
+        P3d = np.zeros(shape=(M,N,C))
+        P3d[row, col, pred-1] = W
+        P = P3d.sum(axis=1)
+        return np.argmax(P, axis=1)
 
 print(MixtureOfExperts([1,2,3], 0.3, 10).predict(X, mode="softmax"))
