@@ -93,10 +93,13 @@ class MixtureOfExperts():
     """
     def _distribute_train(self, X, y):
         dist = []
-        
+
         all_rel_idx = [] # Lista de amostras selecionadas
         unselected_idx = []
         pdfs = [] # armazena as probabilidades para montar a matriz que selecionará as amostras não usadas
+
+        self._generate_params(X)
+
         for (center, cov) in self._params:
             
             pdf = self._mvpdf(X, center, cov)
@@ -110,6 +113,7 @@ class MixtureOfExperts():
 
             dist.append({"X" : X_rel, "y" : y_rel})
 
+        ## TODO ::: as pdfs não estão sendo computadas. Verificar.
         P = np.vstack(pdfs).T #concatena todas as PDFS em uma única matriz
 
         all_rel_idx = np.unique(np.concatenate([arr for arr in all_rel_idx])) # cria um vetor com as amostras usadas
@@ -142,7 +146,6 @@ class MixtureOfExperts():
         pdfs = [] #matriz de probabilidades P
         for (center, cov) in self._params:
             pdfs.append(self._mvpdf(X, center, cov))
-
         P = np.array(pdfs).T #matriz de probabilidades
 
         if mode == "softmax":
@@ -153,8 +156,8 @@ class MixtureOfExperts():
 
     def fit(self, X, y):   
         self._classes = np.unique(y)
-        for estimator, (X_sub,y_sub) in zip(self._estimators, self._distribute_train(X,y)):
-            estimator.fit(X_sub,y_sub)
+        for estimator, dist in zip(self._estimators, self._distribute_train(X,y)):
+            estimator.fit(dist["X"],dist["y"])
         print("Estimators fitted successfully.")
 
 
@@ -173,8 +176,18 @@ class MixtureOfExperts():
 
         row, col = np.indices((M,N))
         P3d = np.zeros(shape=(M,N,C))
-        P3d[row, col, pred-1] = W
+        P3d[row, col, pred-1] = G
         P = P3d.sum(axis=1)
         return np.argmax(P, axis=1)
 
-print(MixtureOfExperts([1,2,3], 0.3, 10).predict(X, mode="softmax"))
+
+X, y = load_iris(return_X_y=True)
+from sklearn.neural_network import MLPClassifier
+
+mlp_1 = MLPClassifier(hidden_layer_sizes=10)
+mlp_2 = MLPClassifier(hidden_layer_sizes=5)
+mlp_3 = MLPClassifier(hidden_layer_sizes=15)
+
+me = MixtureOfExperts(estimators=[mlp_1, mlp_2, mlp_3], gt=0.003, random_state=10)
+
+me.fit(X,y)
