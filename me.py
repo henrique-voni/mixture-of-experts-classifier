@@ -186,14 +186,20 @@ class MixtureOfExperts():
 X, y = load_iris(return_X_y=True)
 from sklearn.neural_network import MLPClassifier
 
-mlp_1 = MLPClassifier(hidden_layer_sizes=2)
+mlp_1 = MLPClassifier(hidden_layer_sizes=10)
 mlp_2 = MLPClassifier(hidden_layer_sizes=2)
 
-me = MixtureOfExperts(estimators=[mlp_1, mlp_2], gt=0.003, random_state=10)
+me = MixtureOfExperts(estimators=[mlp_1], gt=0, random_state=10)
 
 me.fit(X,y)
-A = me.predict(X,y)
+A = me.predict(X)
 
 from sklearn.metrics import accuracy_score
 
 print(accuracy_score(A, y))
+
+
+## TODO ::: Verificar desempenho ruim.
+mlp = MLPClassifier(hidden_layer_sizes=10)
+mlp.fit(X,y)
+print(accuracy_score(mlp.predict(X), y))
