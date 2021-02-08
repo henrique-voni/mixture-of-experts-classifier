@@ -113,7 +113,7 @@ class MixtureOfExperts():
 
             dist.append({"X" : X_rel, "y" : y_rel})
 
-        ## TODO ::: as pdfs não estão sendo computadas. Verificar.
+
         P = np.vstack(pdfs).T #concatena todas as PDFS em uma única matriz
 
         all_rel_idx = np.unique(np.concatenate([arr for arr in all_rel_idx])) # cria um vetor com as amostras usadas
@@ -140,16 +140,17 @@ class MixtureOfExperts():
             - mode ["softmax", "normal"]: modo como os G's serão gerados para gerar valores entre 0 e 1. "softmax" aplica a função
             softmax sobre a entrada, enquanto "normal" faz uma simples divisão do valor sobre o total dos valores.
     """
-    def _compute_g(self, X, mode="softmax"):
+    def _compute_g(self, X, norm_mode="softmax"):
         
         if not self._params:
             self._generate_params(X)
         pdfs = [] #matriz de probabilidades P
+        
         for (center, cov) in self._params:
             pdfs.append(self._mvpdf(X, center, cov))
         P = np.array(pdfs).T #matriz de probabilidades
-        print("SHEIPE DO P", P.shape)
-        if mode == "softmax":
+
+        if norm_mode == "softmax":
             return np.apply_along_axis(self._softmax, 0, P)
         return np.apply_along_axis(self._normalize, 0, P)
         
@@ -185,13 +186,14 @@ class MixtureOfExperts():
 X, y = load_iris(return_X_y=True)
 from sklearn.neural_network import MLPClassifier
 
-mlp_1 = MLPClassifier(hidden_layer_sizes=10)
-mlp_2 = MLPClassifier(hidden_layer_sizes=5)
-mlp_3 = MLPClassifier(hidden_layer_sizes=15)
+mlp_1 = MLPClassifier(hidden_layer_sizes=2)
+mlp_2 = MLPClassifier(hidden_layer_sizes=2)
 
-me = MixtureOfExperts(estimators=[mlp_1, mlp_2, mlp_3], gt=0.003, random_state=10)
+me = MixtureOfExperts(estimators=[mlp_1, mlp_2], gt=0.003, random_state=10)
 
 me.fit(X,y)
 A = me.predict(X,y)
 
-print(A)
+from sklearn.metrics import accuracy_score
+
+print(accuracy_score(A, y))
