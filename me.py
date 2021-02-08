@@ -142,12 +142,13 @@ class MixtureOfExperts():
     """
     def _compute_g(self, X, mode="softmax"):
         
-        self._generate_params(X)
+        if not self._params:
+            self._generate_params(X)
         pdfs = [] #matriz de probabilidades P
         for (center, cov) in self._params:
             pdfs.append(self._mvpdf(X, center, cov))
         P = np.array(pdfs).T #matriz de probabilidades
-
+        print("SHEIPE DO P", P.shape)
         if mode == "softmax":
             return np.apply_along_axis(self._softmax, 0, P)
         return np.apply_along_axis(self._normalize, 0, P)
@@ -164,7 +165,7 @@ class MixtureOfExperts():
     def predict(self, X, mode="softmax"):        
         
         G = self._compute_g(X, mode)
-        pred = np.zeros( (len(self._estimators), X.shape[0]) ) 
+        pred = np.zeros( (len(self._estimators), X.shape[0]), dtype=int ) 
         
         for i, estimator in enumerate(self._estimators):
             y_est = estimator.predict(X)        
@@ -191,3 +192,6 @@ mlp_3 = MLPClassifier(hidden_layer_sizes=15)
 me = MixtureOfExperts(estimators=[mlp_1, mlp_2, mlp_3], gt=0.003, random_state=10)
 
 me.fit(X,y)
+A = me.predict(X,y)
+
+print(A)
