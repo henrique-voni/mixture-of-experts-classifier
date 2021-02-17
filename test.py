@@ -23,7 +23,7 @@ me_1 = MEClassifier(estimators=[mlp_me_1], gt=0.33, random_state=100)
 
 print(f"MLP: {classify_dataset(X, y, mlp_single)}" )
 print(f"ME Single MLP: {classify_dataset(X, y, me_1)}")
-
+print("==========================")
 
 ## Caso 2: 1 MLP x ME com 3 MLPs
 mlp_single_2 = MLPClassifier(hidden_layer_sizes=3, activation="relu", random_state=100, max_iter=10000)
@@ -35,7 +35,7 @@ me_2 = MEClassifier([mlp_me_2, mlp_me_3, mlp_me_4], gt=0.33, random_state=100)
 
 print(f"MLP: {classify_dataset(X, y, mlp_single_2)}" )
 print(f"ME w/ 3 MLPs: {classify_dataset(X, y, me_2)}")
-
+print("==========================")
 ## Caso 3: 1 ELM x ME com 3 ELMs
 elm_single_1 = ELMClassifier(n_hidden=4, random_state=100)
 
@@ -46,3 +46,15 @@ me_3 = MEClassifier([elm_me_1, elm_me_2, elm_me_3], gt=0.33, random_state=100)
 
 print(f"ELM: {classify_dataset(X, y, elm_single_1)}")
 print(f"ME w/ 3 ELM: {classify_dataset(X, y, me_3)}")
+print("==========================")
+## Caso 4: 1 ELM x 1 MLP x ME com 1 MLP e 1 ELM
+elm_single_2 = ELMClassifier(n_hidden=4, random_state=100)
+mlp_single_3 = MLPClassifier(hidden_layer_sizes=3, activation="relu", random_state=100, max_iter=10000)
+
+elm_me_4 = ELMClassifier(n_hidden=4, random_state=100)
+mlp_me_5 = MLPClassifier(hidden_layer_sizes=3, activation="relu", random_state=100, max_iter=10000)
+me_3 = MEClassifier([elm_me_4, mlp_me_5], gt=0.33, random_state=100)
+
+print(f"ELM: {classify_dataset(X, y, elm_single_2)}")
+print(f"MLP: {classify_dataset(X, y, mlp_single_3)}")
+print(f"ME w/ 1 ELM & 1 MLP: {classify_dataset(X, y, me_3)}")
