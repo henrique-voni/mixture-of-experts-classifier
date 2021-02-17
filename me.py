@@ -1,19 +1,13 @@
 import numpy as np
-from sklearn.datasets import load_iris
 from sklearn.cluster import KMeans
-from scipy.spatial.distance import euclidean
-
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 
 GATING_THRESHOLD = .3
 N_EXPERTS = 3
 
-X,y = load_iris(return_X_y=True)
-
-
 #BaseEstimator, ClassifierMixin
-class MixtureOfExperts():
+class MEClassifier(BaseEstimator, ClassifierMixin):
 
     def __init__(self, estimators, gt, random_state):
         self._estimators = estimators
@@ -118,7 +112,7 @@ class MixtureOfExperts():
 
         all_rel_idx = np.unique(np.concatenate([arr for arr in all_rel_idx])) # cria um vetor com as amostras usadas
         unselected_idx = np.setdiff1d(np.arange(len(y)), all_rel_idx) # cria um vetor com as amostras não usadas por nenhum cluster
-
+        
         unselected_P = np.take(P, unselected_idx, axis=0) #valores das PDF apenas para as amostras não selecionadas
         unselected_dist_idx = np.argmax(unselected_P, axis=1) #verifica qual PDF tem maior valor pelo indice
         
@@ -160,7 +154,7 @@ class MixtureOfExperts():
         self._classes = np.unique(y)
         for estimator, dist in zip(self._estimators, self._distribute_train(X,y)):
             estimator.fit(dist["X"],dist["y"])
-        print("Estimators fitted successfully.")
+        print("ME: Estimators fitted successfully.")
 
 
     def predict(self, X, mode="softmax"):        
@@ -178,28 +172,7 @@ class MixtureOfExperts():
 
         row, col = np.indices((M,N))
         P3d = np.zeros(shape=(M,N,C))
-        P3d[row, col, pred-1] = G
+        P3d[row, col, pred] = G
         P = P3d.sum(axis=1)
         return np.argmax(P, axis=1)
 
-
-X, y = load_iris(return_X_y=True)
-from sklearn.neural_network import MLPClassifier
-
-mlp_1 = MLPClassifier(hidden_layer_sizes=10)
-mlp_2 = MLPClassifier(hidden_layer_sizes=2)
-
-me = MixtureOfExperts(estimators=[mlp_1], gt=0, random_state=10)
-
-me.fit(X,y)
-A = me.predict(X)
-
-from sklearn.metrics import accuracy_score
-
-print(accuracy_score(A, y))
-
-
-## TODO ::: Verificar desempenho ruim.
-mlp = MLPClassifier(hidden_layer_sizes=10)
-mlp.fit(X,y)
-print(accuracy_score(mlp.predict(X), y))
