@@ -154,8 +154,6 @@ class MEClassifier(BaseEstimator, ClassifierMixin):
         self._classes = np.unique(y)
         for estimator, dist in zip(self._estimators, self._distribute_train(X,y)):
             estimator.fit(dist["X"],dist["y"])
-        print("ME: Estimators fitted successfully.")
-
 
     def predict(self, X, mode="softmax"):        
         

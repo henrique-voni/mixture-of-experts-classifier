@@ -14,12 +14,25 @@ def classify_dataset(X, y, estimator):
 
 X, y = load_iris(return_X_y=True)
 
-mlp_single = MLPClassifier(hidden_layer_sizes=5, activation="relu", random_state=100)
 
-mlp_me_1 = MLPClassifier(hidden_layer_sizes=5, activation="relu", random_state=100)
+## Caso 1: 1 MLP x ME com 1 MLP (teoricamente, o desempenho deve ser o mesmo em ambos os casos).
+mlp_single = MLPClassifier(hidden_layer_sizes=5, activation="relu", random_state=100, max_iter=10000)
+
+mlp_me_1 = MLPClassifier(hidden_layer_sizes=5, activation="relu", random_state=100, max_iter=10000)
 me_1 = MEClassifier(estimators=[mlp_me_1], gt=0.33, random_state=100)
 
 print(f"MLP: {classify_dataset(X, y, mlp_single)}" )
 print(f"ME Single MLP: {classify_dataset(X, y, me_1)}")
 
+
+# Caso 2: 1 MLP x ME com 3 MLPs
+mlp_single_2 = MLPClassifier(hidden_layer_sizes=3, activation="relu", random_state=100, max_iter=10000)
+
+mlp_me_2 = MLPClassifier(hidden_layer_sizes=3, activation="relu", random_state=100, max_iter=10000)
+mlp_me_3 = MLPClassifier(hidden_layer_sizes=3, activation="relu", random_state=100, max_iter=10000)
+mlp_me_4 = MLPClassifier(hidden_layer_sizes=3, activation="relu", random_state=100, max_iter=10000)
+me_2 = MEClassifier([mlp_me_2, mlp_me_3, mlp_me_4], gt=0.33, random_state=100)
+
+print(f"MLP: {classify_dataset(X, y, mlp_single_2)}" )
+print(f"ME w/ 3 MLPs: {classify_dataset(X, y, me_2)}")
 
