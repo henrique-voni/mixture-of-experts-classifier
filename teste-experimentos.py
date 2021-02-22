@@ -8,6 +8,9 @@ from sklearn_extensions.extreme_learning_machines import ELMClassifier
 
 import numpy as np
 
+import copy
+import itertools
+
 RUNS = 50
 
 X,y = load_iris(return_X_y=True)
@@ -16,8 +19,13 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 n_experts = [5,10,15,20,25]
 thresholds = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 
+# Cria os classificadores com base no modelo passado como parâmetro [estimators]
 def create_estimators(estimators, number):
-    pass
+    i = itertools.cycle(estimators)
+    clfs = []
+    for _ in range(number)
+        clfs.append(copy.deepcopy(next(i)))
+    return clfs
 
 
 mean_scores = np.zeros((len(n_experts), len(thresholds)))
